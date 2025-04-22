@@ -2,8 +2,7 @@ import torch
 from model import AuxDrop_MLP
 from dataset import AdultDataset
 from torch.utils.data import DataLoader
-import tqdm
-
+from tqdm import tqdm
 # Custom dataset class to load preprocessed data from CSV
 train_dataset = AdultDataset('adult_income_dataset/adult_train.csv')
 test_dataset = AdultDataset('adult_income_dataset/adult_test.csv')
@@ -11,13 +10,15 @@ test_dataset = AdultDataset('adult_income_dataset/adult_test.csv')
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
+num_aux = train_dataset.x_aux.shape[1]
+num_base = train_dataset.x_base.shape[1]
+
 
 def train_auxdrop(model, train_loader, criterion, optimizer, device, dropout_ratio):
     model.train()
     running_loss = 0.0
-    for x_base, x_aux, labels in tqdm(train_loader, desc="Training AuxDrop_MLP"):
+    for _, x_base, x_aux, labels in tqdm(train_loader, desc="Training AuxDrop_MLP"):
         x_base, x_aux, labels = x_base.to(device), x_aux.to(device), labels.to(device)
-
         optimizer.zero_grad()
         # Pass both x_base and x_aux to the model
         outputs = model(x_base, x_aux, dropout_ratio=dropout_ratio)
@@ -46,8 +47,8 @@ def test_auxdrop(model, test_loader, device):
     return accuracy
 
 # Initialize model (AuxDrop_MLP)
-model = AuxDrop_MLP(input_size=..., hidden_sizes=[64, 32], output_size=2, aux_layer_idx=1,
-                    tot_num_features=..., number_of_aux_features=...)
+model = AuxDrop_MLP(input_size=num_base, hidden_sizes=[64, 32, 16], output_size=2, aux_layer_idx=1,
+                    total_features=num_base+num_aux, num_aux_features=num_aux)
 
 # Optimizer and loss function
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -61,5 +62,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
 # Train and test the model
-train_auxdrop(model, train_loader, criterion, optimizer, device, dropout_ratio)
+for epoch in range(1, 4):
+    print(f"\nEpoch {epoch}/3")
+    train_auxdrop(model, train_loader, criterion, optimizer, device, dropout_ratio)
 test_auxdrop(model, test_loader, device)

@@ -3,7 +3,7 @@ from model import MLP
 from dataset import AdultDataset
 import torch
 from torch.utils.data import DataLoader
-import tqdm
+from tqdm import tqdm
 
 # Custom dataset class to load preprocessed data from CSV
 train_dataset = AdultDataset('adult_income_dataset/adult_train.csv')
@@ -11,6 +11,7 @@ test_dataset = AdultDataset('adult_income_dataset/adult_test.csv')
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+num_features = train_dataset.features.shape[1]
 
 
 def train_mlp(model, train_loader, criterion, optimizer, device):
@@ -18,7 +19,6 @@ def train_mlp(model, train_loader, criterion, optimizer, device):
     running_loss = 0.0
     for features,_,_, labels in tqdm(train_loader, desc="Training MLP"):
         features, labels = features.to(device), labels.to(device)
-
         optimizer.zero_grad()
         outputs = model(features)
         loss = criterion(outputs, labels)
@@ -33,7 +33,7 @@ def test_mlp(model, test_loader, device):
     model.eval()
     correct, total = 0, 0
     with torch.no_grad():
-        for features, labels in tqdm(test_loader, desc="Testing MLP"):
+        for features,_,_, labels in tqdm(test_loader, desc="Testing MLP"):
             features, labels = features.to(device), labels.to(device)
             outputs = model(features)
             predicted = outputs.argmax(dim=1)
@@ -45,12 +45,14 @@ def test_mlp(model, test_loader, device):
     return accuracy
 
 # Initialize model (MLP or AuxDrop_MLP)
-model = MLP(input_size=..., hidden_sizes=[..., ...], output_size=...)
+model = MLP(input_size=num_features, hidden_sizes=[64, 32, 16], output_size=2)
 
 # Optimizer and loss function
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 criterion = torch.nn.CrossEntropyLoss()
 
 # Train and test the model
-train_mlp(model, train_loader, criterion, optimizer)
-test_mlp(model, test_loader)
+for epoch in range(1, 4):
+    print(f"\nEpoch {epoch}/3")
+    train_mlp(model, train_loader, criterion, optimizer, 'cpu')
+test_mlp(model, test_loader,'cpu')

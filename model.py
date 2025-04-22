@@ -37,7 +37,7 @@ class AuxDrop_MLP(nn.Module):
 
         for i, h in enumerate(hidden_sizes):
             # Skip adding the aux_layer_idx + 1 
-            if i == aux_layer_idx + 1:
+            if i == aux_layer_idx:
                 in_size = h  # skip this layer
                 continue
 
@@ -50,9 +50,9 @@ class AuxDrop_MLP(nn.Module):
         self.layers = nn.ModuleList(layers)
 
         # input is (output from aux_layer_idx + aux features), output is hidden_sizes[aux_layer_idx + 1]
-        base_output_dim = hidden_sizes[aux_layer_idx]
-        self.aux_layer = nn.Linear(base_output_dim + num_aux_features, hidden_sizes[aux_layer_idx + 1])
-    def forward(self, x_base, x_aux, aux_mask, dropout_ratio):
+        base_output_dim = hidden_sizes[aux_layer_idx-1]
+        self.aux_layer = nn.Linear(base_output_dim + num_aux_features, hidden_sizes[aux_layer_idx])
+    def forward(self, x_base, x_aux, dropout_ratio):
         x = x_base
         for i, layer in enumerate(self.layers):
             x = layer(x)
