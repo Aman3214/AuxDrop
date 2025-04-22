@@ -3,15 +3,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MLP(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size):
+    def __init__(self, input_size, hidden_sizes, output_size,dropout_ratio):
         super(MLP, self).__init__()
         layers = []
         in_size = input_size
         
         for h in hidden_sizes:
             layers.append(nn.Linear(in_size, h))
-            layers.append(nn.ReLU())
             in_size = h
+            if h == hidden_sizes[2]:
+                layers.append(nn.Dropout(dropout_ratio))
+                continue
+            layers.append(nn.ReLU())
+            
         
         layers.append(nn.Linear(in_size, output_size))
         self.model = nn.Sequential(*layers)
@@ -20,7 +24,7 @@ class MLP(nn.Module):
         x[x == -1] = 0
         val = self.model(x)
         probs = torch.softmax(val, dim=1)
-        return probs
+        return val
 
 
 class AuxDrop_MLP(nn.Module):
@@ -77,4 +81,4 @@ class AuxDrop_MLP(nn.Module):
                 x = self.aux_layer(x)
 
         probs = F.softmax(x, dim=1)
-        return probs
+        return x

@@ -41,7 +41,7 @@ aux_features = {"native-country","workclass","occupation"}
 base_features = features - aux_features
 
 # split data
-train, test = train_test_split(df, test_size=0.2, random_state=42)
+train, test = train_test_split(df, test_size=0.2, random_state=58)
 train.to_csv('adult_income_dataset/adult_train.csv',float_format="%.3f",index=False)
 test.to_csv('adult_income_dataset/adult_test.csv',float_format="%.3f",index=False)
 
